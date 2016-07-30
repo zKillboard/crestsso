@@ -1,0 +1,15 @@
+{
+    "name": "zkillboard/crestsso",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Clinton V. Weiss",
+            "email": "cvweiss@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "cvweiss\\crestsso\\": "src/"
+        }
+    }
+}
