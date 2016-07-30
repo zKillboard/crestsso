@@ -8,6 +8,12 @@ https://developers.eveonline.com/applications/
 
 There you will register the name and description of your app, provide the callback url, and the scopes you'd like to request. When that is completed you will be provided with the clientID and clientSecret you will need for working with Crest SSO.
 
+### Installation
+
+I recommend using PHP's popular package manager:
+
+    composer require zkillboard/crestsso
+
 ### Implementation
 
 This code was created to make the usage of CREST SSO very simple. Once you have your clientID and clientSecret you can instantiate CrestSSO like so:
