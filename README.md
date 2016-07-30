@@ -85,7 +85,7 @@ You can either put a use statement at the beginning of your code:
 
 or fully qualify the class name when instantiating:
 
-    $sso = \zkillboard\crestsso\new CrestSSO($clientID, $secretKey, $callbackURL, $scopes);
+    $sso = new \zkillboard\crestsso\CrestSSO($clientID, $secretKey, $callbackURL, $scopes);
     
 * $userInfo came back without a refreshToken
 
