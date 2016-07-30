@@ -89,7 +89,7 @@ or fully qualify the class name when instantiating:
     
 * $userInfo came back without a refreshToken
 
-If you do not provide any scopes, or only request the publicData scope, then the call is basically good for authentiation only and no refreshToken is needed, therefore the auth server doesn't give out a refreshToken.
+If you do not provide any scopes, or only request the publicData scope, then the call is basically good for authentication only and no refreshToken is needed, therefore the auth server doesn't give out a refreshToken.
 
 #### TODO
 
