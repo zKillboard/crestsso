@@ -30,7 +30,7 @@ Here the control is out of your hands since the user is verifying their identity
     $code = filter_input(INPUT_GET, 'code');
     $userInfo = $sso->handleCallback($code);
 
-The resulting $userInfo array will contain the following values:
+The resulting $userInfo array will contain the following keys with their appropriate values:
 
     characterID
     characterName
