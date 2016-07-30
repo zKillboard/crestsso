@@ -1,3 +1,5 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/zKillboard/crestsso/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/zKillboard/crestsso/?branch=master)
+
 # Crest SSO
 
 ## READ FIRST
@@ -6,7 +8,7 @@ Before using this class you must register your application with CCP here:
 
 https://developers.eveonline.com/applications/
 
-There you will register the name and description of your app, provide the callback url, and the scopes you'd like to request. When that is completed you will be provided with the clientID and clientSecret you will need for working with Crest SSO.
+There you will register the name and description of your app, provide the callback url, and the scopes you'd like to request. When that is completed you will be provided with the clientID and secretKey you will need for working with Crest SSO.
 
 ### Installation
 
@@ -16,13 +18,13 @@ I recommend using PHP's popular package manager:
 
 ### Implementation
 
-This code was created to make the usage of CREST SSO very simple. Once you have your clientID and clientSecret you can instantiate CrestSSO like so:
+This code was created to make the usage of CREST SSO very simple. Once you have your clientID and secretKey you can instantiate CrestSSO like so:
 
-    $sso = new CrestSSO($clientID, $clientSecret, $callbackURL, $scopes);
+    $sso = new CrestSSO($clientID, $secretKey, $callbackURL, $scopes);
 
-$clientID, $clientSecret, and $callbackURL are all strings. The $scopes parameter is an array and defaults to an empty array.
+$clientID, $secretKey, and $callbackURL are all strings. The $scopes parameter is an array and defaults to an empty array.
 
-Once instantiated, you can then retrieve the URL need for the user to login:
+Once instantiated, you can then retrieve the URL needed for the user to login with CREST SSO:
 
     $loginURL = $sso->getLoginURL();
     
@@ -30,9 +32,9 @@ A typical web application will then redirect the user to this loginURL. This exa
 
     header("Location: $loginURL");
 
-Here the control is out of your hands since the user is verifying their identity with CCP and choosing which character they want to pass back to your application. Once they've completed these steps, the CCP auth server will redirect the user back to your callback URL. Here you will need to do a couple of easy steps to obtain the user's characterID, characterName, and refreshToken.
+Here the control is out of your hands since the user is verifying their identity with CCP and choosing which character they want to pass back to your application. Once they've completed these steps, the CCP auth server will redirect the user back to your callback URL. Here you will need to do a couple of steps to obtain the user's information.
 
-    $sso = new CrestSSO($clientID, $clientSecret, $callbackURL, $scopes)
+    $sso = new CrestSSO($clientID, $secretKey, $callbackURL, $scopes)
     $code = filter_input(INPUT_GET, 'code');
     $userInfo = $sso->handleCallback($code);
 
@@ -51,17 +53,19 @@ Keep in mind accessTokens are only good for 20 minutes after creation. If your a
 
 With an access token you can make various auth'ed calls to the CREST server:
 
-    $sso->doCall($url, $fields, $accessToken)
+    $result = $sso->doCall($url, $fields, $accessToken)
 
-or, if you are using a write scope, there is a 4th field when set to true will execute a POST call:
+or, if you are using a write scope, there is a 4th parameter that when set to true will execute a POST call:
 
-    $result = $sso->doCall($url, $fields, $accessToken, true)
+    $result = $sso->doCall($url, $fields, $accessToken, true);
 
-Each call returns the result as a string which will need to be json_decode'ed by your application. I have left this step out so that ou can json_decode to an object:
+These calls will also work as a utility for calling the XML API.
+
+Each call returns the result as a string which will need to be json_decode'ed by your application. I have left this step out so that your application can json_decode to an object:
 
     $jsonObject = json_decode($result);
 
-or as an array:
+or to an array:
 
     $jsonArray = json_decode($result, true);
   
@@ -81,7 +85,7 @@ You can either put a use statement at the beginning of your code:
 
 or fully qualify the class name when instantiating:
 
-    $sso = \zkillboard\crestsso\new CrestSSO($clientID, $clientSecret, $callbackURL, $scopes);
+    $sso = \zkillboard\crestsso\new CrestSSO($clientID, $secretKey, $callbackURL, $scopes);
     
 * $userInfo came back without a refreshToken
 
