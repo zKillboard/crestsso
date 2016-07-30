@@ -76,6 +76,10 @@ You can either put a use statement at the beginning of your code:
 or fully qualify the class name when instantiating:
 
     $sso = \zkillboard\crestsso\new CrestSSO($clientID, $clientSecret, $callbackURL, $scopes);
+    
+* $userInfo came back without a refreshToken
+
+If you do not provide any scopes, or only request the publicData scope, then the call is basically good for authentiation only and no refreshToken is needed, therefore the auth server doesn't give out a refreshToken.
 
 #### TODO
 
