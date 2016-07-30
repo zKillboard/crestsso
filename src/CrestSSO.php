@@ -42,13 +42,13 @@ class CrestSSO
     {
         $fields = ['grant_type' => 'authorization_code', 'code' => $code];
 
-        $tokenString = $this->doCall($this->tokenURL, $fields, null, true);
+        $tokenString = $this->doCall($this->tokenURL, $fields, null, 'POST');
         $tokenJson = json_decode($tokenString, true);
 
         $accessToken = $tokenJson['access_token'];
         $refreshToken = $tokenJson['refresh_token'];
         
-        $verifyString = $this->doCall($this->verifyURL, [], $accessToken, false);
+        $verifyString = $this->doCall($this->verifyURL, [], $accessToken, 'GET');
         $verifyJson = json_decode($verifyString, true);
 
         $retValue = [
@@ -66,17 +66,26 @@ class CrestSSO
     public function getAccessToken($refreshToken)
     {
         $fields = ['grant_type' => 'refresh_token', 'refresh_token' => $refreshToken];
-        $accessString = $this->doCall($this->tokenURL, $fields, null, true);
+        $accessString = $this->doCall($this->tokenURL, $fields, null, 'POST');
         $accessJson = json_decode($accessString, true);
         return $accessJson['access_token'];
     }
 
-    public function doCall($url, $fields, $accessToken, $isPost = false)
+    public function doCall($url, $fields, $accessToken, $callType = 'GET')
     {
+        $callType = strtoupper($callType);
         $header = $accessToken !== null ? 'Authorization: Bearer ' . $accessToken : 'Authorization: Basic ' . base64_encode($this->ccpClientID . ':' . $this->ccpClientSecret);
 
+        $fileResource = null;
+        $fileSize = 0;
+        if (isset($fields['file'])) {
+            $fileResource = fopen($fields['file'], 'r');
+            $fileSize = filesize($fields['file']);
+            unset($fields['file']);
+        }
+
         $fieldsString = $this->buildParams($fields);
-        $url = $isPost ? $url : $url . "?" . $fieldsString;
+        $url = $callType != 'GET' ? $url : $url . "?" . $fieldsString;
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -85,14 +94,25 @@ class CrestSSO
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $callType);
 
-        if ($isPost) {
-            curl_setopt($ch, CURLOPT_POST, count($fields));
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
+        switch ($callType) {
+            case 'PUT':
+                curl_setopt($ch, CURLOPT_INFILE, $fileResource);
+                curl_setopt($ch, CURLOPT_INFILESIZE, $fileSize);
+                break;
+            case 'POST':
+            case 'DELETE':
+                curl_setopt($ch, CURLOPT_POST, count($fields));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
+                break;
         }
 
         $result = curl_exec($ch);
 
+        if ($fileResource != null) {
+            fclose($fileResource);
+        }
         if (curl_errno($ch) !== 0) {
             throw new \Exception(curl_error($ch));
         }
