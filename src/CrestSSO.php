@@ -75,14 +75,7 @@ class CrestSSO
     {
         $callType = strtoupper($callType);
         $header = $accessToken !== null ? 'Authorization: Bearer ' . $accessToken : 'Authorization: Basic ' . base64_encode($this->ccpClientID . ':' . $this->ccpClientSecret);
-
-        $fileResource = null;
-        $fileSize = 0;
-        if (isset($fields['file'])) {
-            $fileResource = fopen($fields['file'], 'r');
-            $fileSize = filesize($fields['file']);
-            unset($fields['file']);
-        }
+        $headers = [$header];
 
         $fieldsString = $this->buildParams($fields);
         $url = $callType != 'GET' ? $url : $url . "?" . $fieldsString;
@@ -90,29 +83,26 @@ class CrestSSO
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_USERAGENT, $this->callbackURL);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [$header]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $callType);
 
         switch ($callType) {
+            case 'DELETE':
             case 'PUT':
-                curl_setopt($ch, CURLOPT_INFILE, $fileResource);
-                curl_setopt($ch, CURLOPT_INFILESIZE, $fileSize);
+                $headers[] = "Content-Type: application/json";
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
                 break;
             case 'POST':
-            case 'DELETE':
                 curl_setopt($ch, CURLOPT_POST, count($fields));
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
                 break;
         }
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         $result = curl_exec($ch);
 
-        if ($fileResource != null) {
-            fclose($fileResource);
-        }
         if (curl_errno($ch) !== 0) {
             throw new \Exception(curl_error($ch));
         }
