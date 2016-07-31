@@ -50,16 +50,27 @@ The resulting $userInfo array will contain the following keys with their appropr
 Keep in mind accessTokens are only good for 20 minutes after creation. If your accessToken has expired, you can use the refreshToken to get a new accessToken:
 
     $sso->getAccessToken($refreshToken);
+    
+### doCall
 
-With an access token you can make various auth'ed calls to the CREST server:
+The doCall method doesn't necessarily have anything to do with SSO but is provided to make it easy and convenient to access authed CREST. doCall can handle GET, POST, PUT, DELETE, and OPTIONS.
+
+We'll start off with a simple GET request:
 
     $result = $sso->doCall($url, $fields, $accessToken)
 
-or, if you are using a write scope, there is a 4th parameter that when set to true will execute a POST call:
+doCall does have a fourth field, which defaults to 'GET', but can be GET, POST, PUT, DELETE, or OPTIONS
 
-    $result = $sso->doCall($url, $fields, $accessToken, true);
+    $result = $sso->doCall($url, $fields, $accessToken, 'OPTIONS');
+    $result = $sso->doCall($url, $fields, $accessToken, 'POST');
+    
+A rough example for setting the MOTD and free move on a fleet:
 
-These calls will also work as a utility for calling the XML API.
+    $result = $sso->doCall("https://crest-tq.eveonline.com/fleets/1043511252862/", ["motd" => "Hi Mom", "isFreeMove" => true], $accessToken, 'PUT');
+
+Or even deleting a squad:
+
+    $result = $sso->doCall("https://crest-tq.eveonline.com/fleets/1043511252862/wings/2053611252862/squads/3108711252862/", [], $accessToken, 'DELETE');
 
 Each call returns the result as a string which will need to be json_decode'ed by your application. I have left this step out so that your application can json_decode to an object:
 
@@ -68,6 +79,8 @@ Each call returns the result as a string which will need to be json_decode'ed by
 or to an array:
 
     $jsonArray = json_decode($result, true);
+    
+These calls will also work as a utility for calling the XML API for scopes that will work on XML API calls. This is why doCall does not return JSON by default, it is left to the developer to work with the returned data any way they see fit.
   
 That's all there is to it! These simple calls will allow you to get started quickly with Eve Online's CREST SSO.
 
@@ -91,6 +104,3 @@ or fully qualify the class name when instantiating:
 
 If you do not provide any scopes, or only request the publicData scope, then the call is basically good for authentication only and no refreshToken is needed, therefore the auth server doesn't give out a refreshToken.
 
-#### TODO
-
-* Provide a function that returns an array of what can be accessed on CREST (e.g. by walking the API)
