@@ -25,12 +25,17 @@ class CrestSSO
 
     public function getLoginURL()
     {
+        $state = uniqid();
+        $fileName = sys_get_temp_dir() . "/crestsso" . $state . ".tmp";
+        touch($fileName);
+
         $fields = [
             "response_type" => "code", 
             "client_id" => $this->ccpClientID,
             "redirect_uri" => $this->callbackURL, 
-            "scope" => implode('+', $this->scopes),
-            "redirect" => $this->referer
+            "scope" => implode(' ', $this->scopes),
+            "redirect" => $this->referer,
+            "state" => $state
         ];
         $params = $this->buildParams($fields);
 
@@ -38,8 +43,14 @@ class CrestSSO
         return $url;
     }
 
-    public function handleCallback($code)
+    public function handleCallback($code, $state)
     {
+        $fileName = sys_get_temp_dir() . "/crestsso" . $state . ".tmp";
+        if (file_exists($fileName) === false) {
+            throw new \Exception("Invalid state passed - possible hijacking attempt");
+        }
+        unlink($fileName);
+
         $fields = ['grant_type' => 'authorization_code', 'code' => $code];
 
         $tokenString = $this->doCall($this->tokenURL, $fields, null, 'POST');
@@ -95,7 +106,6 @@ class CrestSSO
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
                 break;
             case 'POST':
-                curl_setopt($ch, CURLOPT_POST, count($fields));
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
                 break;
         }
@@ -115,7 +125,7 @@ class CrestSSO
         $string = "";
         foreach ($fields as $field=>$value) {
             $string .= $string == "" ? "" : "&";
-            $string .= "$field=$value";
+            $string .= "$field=" . rawurlencode($value);
         }
         return $string;
     }
