@@ -23,11 +23,15 @@ class CrestSSO
         $this->referer = $referer;
     }
 
-    public function getLoginURL()
+    public function getLoginURL($session)
     {
-        $state = uniqid();
-        $fileName = sys_get_temp_dir() . "/crestsso" . $state . ".tmp";
-        touch($fileName);
+        $factory = new \RandomLib\Factory;
+        $generator = $factory->getGenerator(new \SecurityLib\Strength(\SecurityLib\Strength::MEDIUM));
+        $state = $generator->generateString(32, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+        if (is_array($session)) $session["oauth2State"] = $state;
+        else if ($session instanceof \Aura\Session\Segment) $session->set("oauth2State", $state);
+        else throw new \Exception("Unknown session type");
 
         $fields = [
             "response_type" => "code", 
@@ -43,13 +47,15 @@ class CrestSSO
         return $url;
     }
 
-    public function handleCallback($code, $state)
+    public function handleCallback($code, $state, $session)
     {
-        $fileName = sys_get_temp_dir() . "/crestsso" . $state . ".tmp";
-        if (file_exists($fileName) === false) {
-            throw new \Exception("Invalid state passed - possible hijacking attempt");
+        if (is_array($session)) $oauth2State = $session["oauth2State"];
+        elseif ($session instanceof \Aura\Session\Segment) $oauth2State = $session->get("oauth2State");
+        else throw new \Exception("Unknown session type");
+
+        if ($oauth2State != $state) {
+            throw new \Exception("Invalid state returned - possible hijacking attempt");
         }
-        unlink($fileName);
 
         $fields = ['grant_type' => 'authorization_code', 'code' => $code];
 
