@@ -1,5 +1,3 @@
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/zKillboard/crestsso/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/zKillboard/crestsso/?branch=master)
-
 # Crest SSO
 
 ## READ FIRST
@@ -16,6 +14,13 @@ I recommend using PHP's popular package manager:
 
     composer require zkillboard/crestsso
 
+### Dependencies
+
+CrestSSO requires the curl extension to be installed. CrestSSO will also install the following:
+
+* ircmaxell/random-lib - Used to generate a cyrpto safe state value
+* aura/session - An excellent session management library. Highly recommended.
+
 ### Implementation
 
 This code was created to make the usage of CREST SSO very simple. Once you have your clientID and secretKey you can instantiate CrestSSO like so:
@@ -26,7 +31,9 @@ $clientID, $secretKey, and $callbackURL are all strings. The $scopes parameter i
 
 Once instantiated, you can then retrieve the URL needed for the user to login with CREST SSO:
 
-    $loginURL = $sso->getLoginURL();
+    $loginURL = $sso->getLoginURL($session);
+
+$session can be PHP's $_SESSION, or, an instance of Aura\Session\Segment. More session handling libraries can be added via PR.
     
 A typical web application will then redirect the user to this loginURL. This example will use PHP's header command, but I recommend using a framework such as Slim.
 
@@ -36,7 +43,8 @@ Here the control is out of your hands since the user is verifying their identity
 
     $sso = new CrestSSO($clientID, $secretKey, $callbackURL, $scopes)
     $code = filter_input(INPUT_GET, 'code');
-    $userInfo = $sso->handleCallback($code);
+    state = filter_input(INPUT_GET, 'state');
+    $userInfo = $sso->handleCallback($code, $state, $session);
 
 The resulting $userInfo array will contain the following keys with their appropriate values:
 
@@ -104,3 +112,6 @@ or fully qualify the class name when instantiating:
 
 If you do not provide any scopes, or only request the publicData scope, then the call is basically good for authentication only and no refreshToken is needed, therefore the auth server doesn't give out a refreshToken.
 
+TODO: 
+
+* Modify code to be PSR-7 compliant.
