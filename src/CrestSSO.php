@@ -103,18 +103,20 @@ class CrestSSO
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $callType);
 
         switch ($callType) {
             case 'DELETE':
             case 'PUT':
+            case 'POST_JSON':
                 $headers[] = "Content-Type: application/json";
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(empty($fields) ? (object) NULL : $fields, JSON_UNESCAPED_SLASHES));
+                $callType = $callType == 'POST_JSON' ? 'POST' : $callType;
                 break;
             case 'POST':
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
                 break;
         }
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $callType);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         $result = curl_exec($ch);
