@@ -76,6 +76,10 @@ A rough example for setting the MOTD and free move on a fleet:
 
     $result = $sso->doCall("https://crest-tq.eveonline.com/fleets/1043511252862/", ["motd" => "Hi Mom", "isFreeMove" => true], $accessToken, 'PUT');
 
+Adding a wing, squad, etc. requires a POST with an empty JSON dict body, which is easily doable. The following example, using POST_JSON, will post the contents of the $fields as an empty JSON dict in this case and then make an actual POST call.
+
+    $result = $sso->doCall("https://crest-tq.eveonline.com/fleets/1043511252862/wings/", [], $accessToken, 'POST_JSON');
+
 Or even deleting a squad:
 
     $result = $sso->doCall("https://crest-tq.eveonline.com/fleets/1043511252862/wings/2053611252862/squads/3108711252862/", [], $accessToken, 'DELETE');
