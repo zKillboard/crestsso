@@ -18,7 +18,7 @@ I recommend using PHP's popular package manager:
 
 CrestSSO requires the curl extension to be installed. CrestSSO will also install the following:
 
-* ircmaxell/random-lib - Used to generate a cyrpto safe state value
+* ircmaxell/random-lib - Used to generate a crypto safe state value
 * aura/session - An excellent session management library. Highly recommended.
 
 ### Implementation
