@@ -25,13 +25,7 @@ class CrestSSO
 
     public function getLoginURL($session)
     {
-        $factory = new \RandomLib\Factory;
-        $generator = $factory->getGenerator(new \SecurityLib\Strength(\SecurityLib\Strength::MEDIUM));
-        $state = $generator->generateString(32, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
-        if (is_array($session)) $session["oauth2State"] = $state;
-        else if (get_class($session) === "Aura\Session\Segment") $session->set("oauth2State", $state);
-        else throw new \Exception("Unknown session type");
+        $state = $this->setSessionState($session);
 
         $fields = [
             "response_type" => "code", 
@@ -47,15 +41,51 @@ class CrestSSO
         return $url;
     }
 
-    public function handleCallback($code, $state, $session)
+    protected function setSessionState($session)
     {
-        if (is_array($session)) $oauth2State = $session["oauth2State"];
-        elseif (get_class($session) === "Aura\Session\Segment") $oauth2State = $session->get("oauth2State");
-        else throw new \Exception("Unknown session type");
+        $factory = new \RandomLib\Factory;
+        $generator = $factory->getGenerator(new \SecurityLib\Strength(\SecurityLib\Strength::MEDIUM));
+        $state = $generator->generateString(32, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-        if ($oauth2State != $state) {
+        $class = is_array($session) ? "Array" : get_class($session);
+        switch ($class) {
+            case "Array":
+                $session["oauth2State"];
+                break;
+            case "Aura\Session\Segment":
+                $session->set("oauth2State", $state);
+                break;
+            default:
+                throw new \Exception("Unknown session type");
+        }
+
+        return $state;
+    }
+
+    protected function getSessionState($session)
+    {
+        $class = is_array($session) ? "Array" : get_class($session);
+        switch ($class) {
+            case "Array":
+                return $session["oauth2State"];
+            case "Aura\Session\Segment":
+                return $session->get("oauth2State");
+            default:
+                throw new \Exception("Unknown session type");
+        }
+    }
+
+    protected function validateStates($state, $oauth2State)
+    {
+        if ($oauth2State !== $state) {
             throw new \Exception("Invalid state returned - possible hijacking attempt");
         }
+    }
+
+    public function handleCallback($code, $state, $session)
+    {
+        $oauth2State = $this->getSessionState($session);
+        $this->validateStates($state, $oauth2State);
 
         $fields = ['grant_type' => 'authorization_code', 'code' => $code];
 
@@ -64,7 +94,7 @@ class CrestSSO
 
         $accessToken = $tokenJson['access_token'];
         $refreshToken = $tokenJson['refresh_token'];
-        
+
         $verifyString = $this->doCall($this->verifyURL, [], $accessToken, 'GET');
         $verifyJson = json_decode($verifyString, true);
 
@@ -74,10 +104,9 @@ class CrestSSO
             'scopes' => $verifyJson['Scopes'],
             'tokenType' => $verifyJson['TokenType'],
             'refreshToken' => $refreshToken,
-            'accessToken' => $accessToken
-        ];
+            'accessToken' => $accessToken];
 
-        return $retValue;
+            return $retValue;
     }
 
     public function getAccessToken($refreshToken)
