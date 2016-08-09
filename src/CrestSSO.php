@@ -30,7 +30,7 @@ class CrestSSO
         $state = $generator->generateString(32, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
         if (is_array($session)) $session["oauth2State"] = $state;
-        else if ($session instanceof \Aura\Session\Segment) $session->set("oauth2State", $state);
+        else if (get_class($session) === "Aura\Session\Segment") $session->set("oauth2State", $state);
         else throw new \Exception("Unknown session type");
 
         $fields = [
@@ -50,7 +50,7 @@ class CrestSSO
     public function handleCallback($code, $state, $session)
     {
         if (is_array($session)) $oauth2State = $session["oauth2State"];
-        elseif ($session instanceof \Aura\Session\Segment) $oauth2State = $session->get("oauth2State");
+        elseif (get_class($session) === "Aura\Session\Segment") $oauth2State = $session->get("oauth2State");
         else throw new \Exception("Unknown session type");
 
         if ($oauth2State != $state) {
