@@ -151,7 +151,7 @@ class CrestSSO
         $result = curl_exec($ch);
 
         if (curl_errno($ch) !== 0) {
-            throw new \Exception(curl_error($ch));
+            throw new \Exception(curl_error($ch), curl_errno($ch));
         }
 
         return $result;
