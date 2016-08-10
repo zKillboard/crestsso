@@ -65,7 +65,7 @@ The doCall method doesn't necessarily have anything to do with SSO but is provid
 
 We'll start off with a simple GET request:
 
-    $result = $sso->doCall($url, $fields, $accessToken)
+    $result = $sso->doCall($url, $fields, $accessToken);
 
 doCall does have a fourth field, which defaults to 'GET', but can be GET, POST, PUT, DELETE, or OPTIONS
 
