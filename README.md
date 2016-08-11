@@ -41,9 +41,9 @@ A typical web application will then redirect the user to this loginURL. This exa
 
 Here the control is out of your hands since the user is verifying their identity with CCP and choosing which character they want to pass back to your application. Once they've completed these steps, the CCP auth server will redirect the user back to your callback URL. Here you will need to do a couple of steps to obtain the user's information.
 
-    $sso = new CrestSSO($clientID, $secretKey, $callbackURL, $scopes)
+    $sso = new CrestSSO($clientID, $secretKey, $callbackURL, $scopes);
     $code = filter_input(INPUT_GET, 'code');
-    state = filter_input(INPUT_GET, 'state');
+    $state = filter_input(INPUT_GET, 'state');
     $userInfo = $sso->handleCallback($code, $state, $session);
 
 The resulting $userInfo array will contain the following keys with their appropriate values:
