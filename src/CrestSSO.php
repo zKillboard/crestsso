@@ -4,35 +4,58 @@ namespace zkillboard\crestsso;
 
 class CrestSSO
 {
-    protected $ccpClientID;
-    protected $ccpClientSecret;
+    protected $clientID;
+    protected $secretKey;
     protected $callbackURL;
     protected $scopes;
-    protected $referer;
+    protected $state;
 
     protected $loginURL = "https://login.eveonline.com/oauth/authorize";
     protected $tokenURL = "https://login.eveonline.com/oauth/token";
     protected $verifyURL = "https://login.eveonline.com/oauth/verify";
 
-    public function __construct($ccpClientID, $ccpClientSecret, $callbackURL, $scopes = [], $referer = '/')
+    public function __construct($clientID, $secretKey, $callbackURL, $scopes = [])
     {
-        $this->ccpClientID = $ccpClientID;
-        $this->ccpClientSecret = $ccpClientSecret;
+        $this->clientID = $clientID;
+        $this->secretKey = $secretKey;
         $this->callbackURL = $callbackURL;
         $this->scopes = $scopes;
-        $this->referer = $referer;
     }
 
-    public function getLoginURL($session)
+    public function createState()
     {
-        $state = $this->setSessionState($session);
+        $factory = new \RandomLib\Factory;
+        $generator = $factory->getGenerator(new \SecurityLib\Strength(\SecurityLib\Strength::MEDIUM));
+        $state = $generator->generateString(128, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+        return $state;
+    }
+
+    public function getState()
+    {
+        return $this->state;
+    }
+
+    /*
+        Allows the developer to set their own state if they aren't happy with the
+        state created by RandomLib.
+    */
+    public function setState($state)
+    {
+        $this->state = $state;
+    }
+
+    public function getLoginURL(&$session)
+    {
+        $state = ($this->state === null) ? $this->createState() : $this->state;
+        $this->state = $state;
+        $this->setSessionState($state, $session);
 
         $fields = [
             "response_type" => "code", 
-            "client_id" => $this->ccpClientID,
+            "client_id" => $this->clientID,
             "redirect_uri" => $this->callbackURL, 
             "scope" => implode(' ', $this->scopes),
-            "redirect" => $this->referer,
             "state" => $state
         ];
         $params = $this->buildParams($fields);
@@ -41,16 +64,12 @@ class CrestSSO
         return $url;
     }
 
-    protected function setSessionState($session)
+    protected function setSessionState($state, &$session)
     {
-        $factory = new \RandomLib\Factory;
-        $generator = $factory->getGenerator(new \SecurityLib\Strength(\SecurityLib\Strength::MEDIUM));
-        $state = $generator->generateString(32, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
         $class = is_array($session) ? "Array" : get_class($session);
         switch ($class) {
             case "Array":
-                $session["oauth2State"];
+                $session["oauth2State"] = $state;
                 break;
             case "Aura\Session\Segment":
                 $session->set("oauth2State", $state);
@@ -58,8 +77,6 @@ class CrestSSO
             default:
                 throw new \Exception("Unknown session type");
         }
-
-        return $state;
     }
 
     protected function getSessionState($session)
@@ -67,7 +84,7 @@ class CrestSSO
         $class = is_array($session) ? "Array" : get_class($session);
         switch ($class) {
             case "Array":
-                return $session["oauth2State"];
+                return @$session["oauth2State"];
             case "Aura\Session\Segment":
                 return $session->get("oauth2State");
             default:
@@ -106,7 +123,7 @@ class CrestSSO
             'refreshToken' => $refreshToken,
             'accessToken' => $accessToken];
 
-            return $retValue;
+        return $retValue;
     }
 
     public function getAccessToken($refreshToken)
@@ -120,7 +137,7 @@ class CrestSSO
     public function doCall($url, $fields, $accessToken, $callType = 'GET')
     {
         $callType = strtoupper($callType);
-        $header = $accessToken !== null ? 'Authorization: Bearer ' . $accessToken : 'Authorization: Basic ' . base64_encode($this->ccpClientID . ':' . $this->ccpClientSecret);
+        $header = $accessToken !== null ? 'Authorization: Bearer ' . $accessToken : 'Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->secretKey);
         $headers = [$header];
 
         $fieldsString = $this->buildParams($fields);
