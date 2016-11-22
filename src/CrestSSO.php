@@ -71,6 +71,9 @@ class CrestSSO
             case "Array":
                 $session["oauth2State"] = $state;
                 break;
+            case "Nette\Http\SessionSection":
+                $session->oauth2State = $state;
+                break;
             case "Aura\Session\Segment":
                 $session->set("oauth2State", $state);
                 break;
@@ -85,6 +88,8 @@ class CrestSSO
         switch ($class) {
             case "Array":
                 return @$session["oauth2State"];
+            case "Nette\Http\SessionSection":
+                return $session->oauth2State;
             case "Aura\Session\Segment":
                 return $session->get("oauth2State");
             default:
