@@ -146,8 +146,7 @@ class CrestSSO
         $header = $accessToken !== null ? 'Authorization: Bearer ' . $accessToken : 'Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->secretKey);
         $headers = [$header];
 
-        $fieldsString = $this->buildParams($fields);
-        $url = $callType != 'GET' ? $url : $url . "?" . $fieldsString;
+        $url = $callType != 'GET' ? $url : $url . "?" . $this->buildParams($fields);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -165,7 +164,7 @@ class CrestSSO
                 $callType = $callType == 'POST_JSON' ? 'POST' : $callType;
                 break;
             case 'POST':
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $this->buildParams($fields));
                 break;
         }
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $callType);
