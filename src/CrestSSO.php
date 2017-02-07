@@ -125,6 +125,7 @@ class CrestSSO
             'characterName' => $verifyJson['CharacterName'],
             'scopes' => $verifyJson['Scopes'],
             'tokenType' => $verifyJson['TokenType'],
+            'ownerHash' => $verifyJson['CharacterOwnerHash'],
             'refreshToken' => $refreshToken,
             'accessToken' => $accessToken];
 
