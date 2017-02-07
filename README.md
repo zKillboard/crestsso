@@ -54,6 +54,7 @@ The resulting $userInfo array will contain the following keys with their appropr
     tokenType
     refreshToken
     accessToken
+    ownerHash
 
 Keep in mind accessTokens are only good for 20 minutes after creation. If your accessToken has expired, you can use the refreshToken to get a new accessToken:
 
