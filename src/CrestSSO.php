@@ -137,6 +137,7 @@ class CrestSSO
         $fields = ['grant_type' => 'refresh_token', 'refresh_token' => $refreshToken];
         $accessString = $this->doCall($this->tokenURL, $fields, null, 'POST');
         $accessJson = json_decode($accessString, true);
+        if (!isset($accessJson['access_token'])) throw new \Exception("Unexpected value returned from call:\n" . print_r($accessJson, true));
         return $accessJson['access_token'];
     }
 
